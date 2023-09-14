@@ -6,19 +6,19 @@
 ################################################################用户配置################################################################
 # 账号密码
 ACCOUNTS = {
-    "华为账户账号/电话/邮箱": "账户密码"
+   
 }
 
 # chrome driver路径
 chrome_driver = "/usr/local/bin/chromedriver"   # Mac示例
 # chrome_driver = "C:\Google\ChromeApplication\chromedriver.exe"   # Windows示例
 
-personalDataPath = "/Users/zhangliang/Downloads/BUY-HW-master/Default"  # Chrome的个人资料路径
+personalDataPath = "/Users/joe/Downloads/HUAWEI-STORE-GO/Default"  # Chrome的个人资料路径
 
 # 手机链接
-BUY_URL = 'https://www.vmall.com/product/10086232069466.html'
+BUY_URL = 'https://www.vmall.com/product/10086764961298.html'
 # 开始自动刷新等待抢购按钮出现的时间点,建议提前10-30s，并提前2-5分钟启动python脚本，确保登陆成功，进入页面。
-BEGIN_GO = '2021-02-23 10:07:50'
+BEGIN_GO = '2023-09-14 14:07:50'
 # 是否启动自动选手机参数。1为开启，0为关闭。当不启用时，无需填写下面的参数，此时抢购会默认网页上的默(第一个颜色、版本、套餐)。若不需要请关闭此选项能加快速度。
 AUTO_SELECT = 1
 # 是否启动自动选手机颜色
@@ -28,13 +28,13 @@ AUTO_EDITION = 1
 # 是否启动自动选手机套餐
 AUTO_COMBO = 1
 # 颜色，仅当AUTO_SELECT=1和AUTO_COLOR=1时才需要写
-COLOR = '翡冷翠'
+COLOR = '砚黑'
 # 版本，仅当AUTO_SELECT=1和AUTO_EDITION=1时才需要写
-EDITION = '5G全网通 8GB+256GB'
+EDITION = '16GB+1TB'
 # 套餐，仅当AUTO_SELECT=1和AUTO_COMBO=1时才需要写
-COMBO = '官方标配'
+COMBO = '订金预售'
 # 登陆信任 0表示不信任，1表示信任。一般无需改动。若信任，当您下次登录时，系统将不会要求您提供验证码。对于HUAWEI STORE普通版脚本，每次运行脚本即创建一个新Chrome，信任意义不大，默认为0，建议设置为0
-TRUST = 0
+TRUST = 1
 
 ################################################################程序开始################################################################
 from selenium.webdriver.common.action_chains import ActionChains
@@ -42,16 +42,19 @@ import selenium
 from threading import Thread
 import time
 from selenium import webdriver
+from selenium.webdriver.chrome.service import Service
+import types
+from selenium.webdriver.common.by import By
 # 登录url,一般无需改动
 LOGIN_URL = 'https://hwid1.vmall.com/CAS/portal/login.html?validated=true&themeName=red&service=https%3A%2F%2Fwww.vmall.com%2Faccount%2Facaslogin%3Furl%3Dhttps%253A%252F%252Fwww.vmall.com%252F&loginChannel=26000000&reqClientType=26&lang=zh-cn'
 # 进到购买页面后提交订单
 
 
 def submitOrder(driver, user):
-    time.sleep(1)
+    time.sleep(0.5)
     if BUY_URL == driver.current_url:
         print(user + ':当前页面还在商品详情！！！')
-        time.sleep(3)
+        time.sleep(0.5)
         goToBuy(driver, user)
     else:
         order_url = driver.current_url
@@ -179,6 +182,7 @@ def goToBuy(driver, user):
         if time.time() >= timestamp:  # 到了抢购时间
             text = driver.find_elements_by_xpath(
                 '//*[@id="pro-operation"]/a')[0].text
+            print(text)
             if text == '已售完':
                 over = True
                 break
@@ -218,6 +222,9 @@ def goToBuy(driver, user):
                                     time.localtime()) + user + ':请手动进行预约。程序将在一分钟后退出')
                 buyButton.click()
                 exit(60)
+            elif text == '即将开始':
+                print('即将开始')
+                time.sleep(1)
             else:
                 over = True
                 break
@@ -255,14 +262,14 @@ def trustdriver(driver, user):
         if TRUST == 0:
             try:
                 trust = driver.find_element_by_xpath(
-                    '//div[@ht="click_dialog_leftbtn"]')
+                    '//div[@ht="click_login_trustBrowser_dontTrust"]')
                 trust.click()
             except:
                 print(user+'不信任出错，请自行点击不信任')
         if TRUST == 1:
             try:
                 trust = driver.find_element_by_xpath(
-                    '//div[@ht="click_dialog_rightbtn"]')
+                    '//div[@ht="click_login_trustBrowser_trust"]')
                 trust.click()
             except:
                 print(user + '信任出错，请自行点击信任')
@@ -279,6 +286,8 @@ def sendcode(driver, user):
         number = driver.find_element_by_xpath('//div[@id="accountDiv"]')
     except:
         time.sleep(0.2)
+    print(isGetVerification.text)
+
     if isGetVerification.text == '获取验证码':
         isGetVerification.click()
         if number is None:
@@ -297,12 +306,61 @@ def sendcode(driver, user):
 # 登录商城,登陆成功后至商城首页然后跳转至抢购页面
 
 
+def find_element_by_xpath(self,xpath):
+    return self.find_element("xpath",xpath)
+
+def find_elements_by_xpath(self,xpath):
+    return self.find_elements("xpath",xpath)
+
+def find_element_by_link_text(self,text):
+    return self.find_element(By.LINK_TEXT,text)
+
+def find_element_by_id(self,id):
+    return self.find_element(By.ID,id)
+
+class EmptyTitle:
+  def __init__(self):
+    self.text = ""
+
+
+
+def getVerifyWindowTitle(driver):
+    try:
+        item = driver.find_element_by_xpath('//div[@class="hwid-dialog-header hwid-dialog-textAlign-left"]/div')
+        print(item.text)
+        return item
+    except Exception as e:
+        print(e)
+    return EmptyTitle()
+    #$x("//div[contains(@class,'hwid-dialog-header')]/div")[0].textContent
+
+
+def getTrustWindowTitle(driver):
+    try:
+        item = driver.find_element_by_xpath('//div[@class="hwid-dialog-header hwid-dialog-textAlign-left"]/div')
+        print(item.text)
+        return item
+    except Exception as e:
+        print(e)
+    return EmptyTitle()
+
 def loginMall(user, pwd):
-    option = webdriver.ChromeOptions()
-    argument = '--user-data-dir=' + personalDataPath
-    option.add_argument(argument)
+
+
+
+    service = Service(executable_path=chrome_driver)
+    options = webdriver.ChromeOptions()
+    options.add_argument('--user-data-dir=' + personalDataPath)
+    options.add_argument("--headless")
     print('配置成功')
-    driver = webdriver.Chrome(executable_path=chrome_driver, options=option)
+
+    driver = webdriver.Chrome(service=service, options=options)
+    driver.find_element_by_xpath = types.MethodType(find_element_by_xpath, driver)
+    driver.find_elements_by_xpath = types.MethodType(find_elements_by_xpath, driver)
+    driver.find_element_by_link_text = types.MethodType(find_element_by_link_text, driver)
+    driver.find_element_by_id = types.MethodType(find_element_by_id, driver)
+
+    #driver = webdriver.Chrome(executable_path=chrome_driver, options=option)
     print('webDriver打开成功')
     driver.get(LOGIN_URL)
     print('打开登陆页面')
@@ -336,9 +394,9 @@ def loginMall(user, pwd):
                 print(user + '请手动完成认证并登陆！')
                 isRemind = 1
             try:  # 判断是否在获取验证码界面
-                isGetVerification = driver.find_element_by_xpath(
-                    '//div[@class="hwid-dialog-header paddingBottom18"]/div')
-                if isGetVerification.text == '身份验证':
+                isGetVerification = getVerifyWindowTitle(driver)
+
+                if isGetVerification.text == '需要验证您的身份':
                     sendcode(driver, user)
                     islogin = 1
             except:
@@ -350,8 +408,7 @@ def loginMall(user, pwd):
                     time.sleep(0.05)
             if islogin == 1:
                 try:  # 判断是否在信任浏览器界面
-                    isGetVerification = driver.find_element_by_xpath(
-                        '//div[@class="hwid-dialog-header paddingBottom40"]/div')
+                    isGetVerification = getTrustWindowTitle(driver)
                     if '是否信任此浏览器' in isGetVerification.text:
                         islogin = 2
                         trustdriver(driver, user)
@@ -375,6 +432,19 @@ def loginMall(user, pwd):
                     print('60s后程序退出')
                     time.sleep(60)
                     exit()
+            if islogin == 0 or islogin == 1:
+                error = ""
+                try:
+                    error = driver.find_element_by_xpath(
+                        '//div[@class="box-errors-1"]').text
+                    print(error)
+                except:
+                    time.sleep(0.1)
+                if '页面已失效' in error:
+                    try:
+                       driver.refresh()
+                    except:
+                        time.sleep(0.1)
 
 
 if __name__ == "__main__":

@@ -6,7 +6,7 @@
 ################################################################用户配置################################################################
 # 账号密码
 ACCOUNTS = {
-    "华为账户账号/电话/邮箱": "账户密码"
+
 }
 
 # chrome driver路径
@@ -14,9 +14,9 @@ chrome_driver = "/usr/local/bin/chromedriver"   # Mac示例
 # chrome_driver = "C:\Google\ChromeApplication\chromedriver.exe"   # Windows示例
 
 # 手机链接
-BUY_URL = 'https://www.vmall.com/product/10086232069466.html'
+BUY_URL = 'https://www.vmall.com/product/10086764961298.html'
 # 开始自动刷新等待抢购按钮出现的时间点,建议提前10-30s，并提前2-5分钟启动python脚本，确保登陆成功，进入页面。
-BEGIN_GO = '2021-02-23 10:07:50'
+BEGIN_GO = '2023-09-13 17:07:30'
 # 是否启动自动选手机参数。1为开启，0为关闭。当不启用时，无需填写下面的参数，此时抢购会默认网页上的默(第一个颜色、版本、套餐)。若不需要请关闭此选项能加快速度。
 AUTO_SELECT = 1
 # 是否启动自动选手机颜色
@@ -26,11 +26,11 @@ AUTO_EDITION = 1
 # 是否启动自动选手机套餐
 AUTO_COMBO = 1
 # 颜色，仅当AUTO_SELECT=1和AUTO_COLOR=1时才需要写
-COLOR = '翡冷翠'
+COLOR = '砚黑'
 # 版本，仅当AUTO_SELECT=1和AUTO_EDITION=1时才需要写
-EDITION = '5G全网通 8GB+256GB'
+EDITION = '16GB+1TB'
 # 套餐，仅当AUTO_SELECT=1和AUTO_COMBO=1时才需要写
-COMBO = '官方标配'
+COMBO = '订金预售'
 # 登陆信任 0表示不信任，1表示信任。一般无需改动。若信任，当您下次登录时，系统将不会要求您提供验证码。对于HUAWEI STORE普通版脚本，每次运行脚本即创建一个新Chrome，信任意义不大，默认为0，建议设置为0
 TRUST = 0
 
@@ -40,6 +40,10 @@ import selenium
 from threading import Thread
 import time
 from selenium import webdriver
+from selenium.webdriver.chrome.service import Service
+import types
+from selenium.webdriver.common.by import By
+
 # 登录url,一般无需改动
 LOGIN_URL = 'https://hwid1.vmall.com/CAS/portal/login.html?validated=true&themeName=red&service=https%3A%2F%2Fwww.vmall.com%2Faccount%2Facaslogin%3Furl%3Dhttps%253A%252F%252Fwww.vmall.com%252F&loginChannel=26000000&reqClientType=26&lang=zh-cn'
 # 进到购买页面后提交订单
@@ -146,7 +150,7 @@ def select(driver, user):
 def goToBuy(driver, user):
     autoSelect = AUTO_SELECT
     driver.get(BUY_URL)
-    time.sleep(0.5)
+    time.sleep(5)
     if BUY_URL != driver.current_url:
         driver.get(BUY_URL)
     print(user + '打开购买页面')
@@ -175,9 +179,19 @@ def goToBuy(driver, user):
                                 time.localtime()) + user + '准备完毕，开始等待')
             isRemind = 1
         if time.time() >= timestamp:  # 到了抢购时间
-            text = driver.find_elements_by_xpath(
-                '//*[@id="pro-operation"]/a')[0].text
-            if text == '已售完':
+            tmp = driver.find_elements_by_xpath(
+                '//*[@id="pro-operation"]/a')
+            print(tmp)
+            if tmp and len(tmp) :
+                text = tmp[0].text
+            else:
+                text = '请登陆'
+            print(text)
+            if text == '即将开始':
+                print(time.strftime("%Y-%m-%d %H:%M:%S",
+                                    time.localtime()) + user + '即将开始')
+                time.sleep(4)
+            elif text == '已售完':
                 over = True
                 break
             elif text == '立即申购':
@@ -216,6 +230,10 @@ def goToBuy(driver, user):
                                     time.localtime()) + user + ':请手动进行预约。程序将在一分钟后退出')
                 buyButton.click()
                 exit(60)
+            elif text == '请登陆':
+                print(time.strftime("%Y-%m-%d %H:%M:%S",
+                                    time.localtime()) + user + ':请手动登陆。')
+                time.sleep(4)
             else:
                 over = True
                 break
@@ -295,8 +313,29 @@ def sendcode(driver, user):
 # 登录商城,登陆成功后至商城首页然后跳转至抢购页面
 
 
+def find_element_by_xpath(self,xpath):
+    return self.find_element("xpath",xpath)
+
+def find_elements_by_xpath(self,xpath):
+    return self.find_elements("xpath",xpath)
+
+def find_element_by_link_text(self,text):
+    return self.find_element(By.LINK_TEXT,text)
+
+def find_element_by_id(self,id):
+    return self.find_element(By.ID,id)
+
 def loginMall(user, pwd):
-    driver = webdriver.Chrome(executable_path=chrome_driver)
+
+    service = Service(executable_path=chrome_driver)
+    options = webdriver.ChromeOptions()
+    driver = webdriver.Chrome(service=service, options=options)
+    driver.find_element_by_xpath = types.MethodType(find_element_by_xpath, driver)
+    driver.find_elements_by_xpath = types.MethodType(find_elements_by_xpath, driver)
+    driver.find_element_by_link_text = types.MethodType(find_element_by_link_text, driver)
+    driver.find_element_by_id = types.MethodType(find_element_by_id, driver)
+
+    #driver = webdriver.Chrome(executable_path=chrome_driver)
     driver.get(LOGIN_URL)
     try:
         time.sleep(3)  # 等待页面加载完成
@@ -312,7 +351,8 @@ def loginMall(user, pwd):
         time.sleep(1)
         denglu.click()
         print(user + '成功输入了账号密码，尝试登陆.')
-    except:
+    except Exception as e:
+        print(e)
         print(user + '账号密码不能输入,请手动输入并登陆！')
     isRemind = 0
     islogin = 0
