@@ -13,13 +13,13 @@ ACCOUNTS = {
 chrome_driver = "/usr/local/bin/chromedriver"   # Mac示例
 # chrome_driver = "C:\Google\ChromeApplication\chromedriver.exe"   # Windows示例
 
-personalDataPath = "/Users/joe/Downloads/HUAWEI-STORE-GO/Default"  # Chrome的个人资料路径
+personalDataPath = "/Users/joe/Downloads/HUAWEI-STORE-GO/Default/"  # Chrome的个人资料路径
 
 # 手机链接
 BUY_URL = 'https://www.vmall.com/product/10086764961298.html'
 # 开始自动刷新等待抢购按钮出现的时间点,建议提前10-30s，并提前2-5分钟启动python脚本，确保登陆成功，进入页面。
-BEGIN_GO = '2023-09-14 14:07:50'
-# 是否启动自动选手机参数。1为开启，0为关闭。当不启用时，无需填写下面的参数，此时抢购会默认网页上的默(第一个颜色、版本、套餐)。若不需要请关闭此选项能加快速度。
+BEGIN_GO = '2023-09-14 18:07:50'
+# 是否启动自动选手机参数。1为开启，0为关闭。当不启用时，无需写下面的参数，此时抢购会默认网页上的默(第一个颜色、版本、套餐)。若不需要请关闭此选项能加快速度。
 AUTO_SELECT = 1
 # 是否启动自动选手机颜色
 AUTO_COLOR = 1
@@ -148,6 +148,21 @@ def select(driver, user):
 # 登录成功去到购买页面
 
 
+def checkNeedRrefresh(driver):
+    error = ""
+    try:
+        error = driver.find_element_by_xpath(
+            '//div[@class="box-errors-1"]').text
+        print(error)
+    except Exception as e:
+        print(e)
+        if '页面已失效' in error:
+            try:
+                driver.refresh()
+            except:
+                time.sleep(0.1)
+
+
 def goToBuy(driver, user):
     autoSelect = AUTO_SELECT
     driver.get(BUY_URL)
@@ -175,6 +190,11 @@ def goToBuy(driver, user):
         print(user+'跳过选择配置')
     isRemind = 0
     while True:
+
+
+        checkNeedRrefresh(driver)
+
+
         if isRemind == 0:
             print(time.strftime("%Y-%m-%d %H:%M:%S",
                                 time.localtime()) + user + '准备完毕，开始等待')
@@ -351,7 +371,7 @@ def loginMall(user, pwd):
     service = Service(executable_path=chrome_driver)
     options = webdriver.ChromeOptions()
     options.add_argument('--user-data-dir=' + personalDataPath)
-    options.add_argument("--headless")
+    #options.add_argument("--headless")
     print('配置成功')
 
     driver = webdriver.Chrome(service=service, options=options)
