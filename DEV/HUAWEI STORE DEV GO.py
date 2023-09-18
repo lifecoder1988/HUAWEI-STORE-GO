@@ -6,7 +6,7 @@
 ################################################################用户配置################################################################
 # 账号密码
 ACCOUNTS = {
-   
+
 }
 
 # chrome driver路径
@@ -16,7 +16,7 @@ chrome_driver = "/usr/local/bin/chromedriver"   # Mac示例
 personalDataPath = "/Users/joe/Downloads/HUAWEI-STORE-GO/Default/"  # Chrome的个人资料路径
 
 # 手机链接
-BUY_URL = 'https://www.vmall.com/product/10086764961298.html'
+BUY_URL = 'https://www.vmall.com/product/10086009079805.html'
 # 开始自动刷新等待抢购按钮出现的时间点,建议提前10-30s，并提前2-5分钟启动python脚本，确保登陆成功，进入页面。
 BEGIN_GO = '2023-09-14 18:07:50'
 # 是否启动自动选手机参数。1为开启，0为关闭。当不启用时，无需写下面的参数，此时抢购会默认网页上的默(第一个颜色、版本、套餐)。若不需要请关闭此选项能加快速度。
@@ -206,8 +206,8 @@ def goToBuy(driver, user):
             if text == '已售完':
                 over = True
                 break
-            elif text == '立即申购':
-                buyButton = driver.find_element_by_link_text('立即申购')
+            elif text == '立即下单':
+                buyButton = driver.find_element_by_link_text('立即下单')
                 isRemindd = 0
                 try:
                     if buyButton.get_attribute('class') != 'product-button02 disabled':
@@ -229,15 +229,15 @@ def goToBuy(driver, user):
                                                     time.localtime()) + user + '准备开始下一轮的抢购')
                                 isRemindd = 1
                 except:
-                    buyButton = driver.find_element_by_link_text('立即申购')
+                    buyButton = driver.find_element_by_link_text('立即下单')
             elif text == '0元预约':
                 buyButton = driver.find_element_by_link_text('0元预约')
                 print(time.strftime("%Y-%m-%d %H:%M:%S",
                                     time.localtime()) + user + ':请手动进行预约。程序将在一分钟后退出')
                 buyButton.click()
                 exit(60)
-            elif text == '参与预约':
-                buyButton = driver.find_element_by_link_text('参与预约')
+            elif text == '支付订金':
+                buyButton = driver.find_element_by_link_text('支付订金')
                 print(time.strftime("%Y-%m-%d %H:%M:%S",
                                     time.localtime()) + user + ':请手动进行预约。程序将在一分钟后退出')
                 buyButton.click()
